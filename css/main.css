@@ -1,0 +1,10 @@
+/*Clear all*/
+*{
+	margin: 0;
+	padding: 0;
+	font-family: Times new roman, Trebuchet MS, serif, sans-serif;
+}
+
+a{
+	text-decoration: none;
+}
