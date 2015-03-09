@@ -8,3 +8,47 @@
 a{
 	text-decoration: none;
 }
+
+body{
+	background: rgb(220,220,220);
+}
+
+/*Index CSS properties*/
+.black{
+	color: black;
+}
+
+.titleSize{
+	font-size: 3em;
+}
+
+.ConnectionForm{
+	border: 7px solid rgb(0, 0, 0);
+	border-radius: 10px;
+	height: 50%;
+	width: 270px;
+	margin: 47px auto;
+	padding: 8% 11%;
+	background: white;
+}
+
+.textAlignCenter{
+	text-align: center;
+}
+
+.fontSize13em{
+	font-size: 1.3em;
+}
+
+.fontSize18em{
+	font-size: 1.8em;
+}
+
+.margin6{
+	margin: 6px 0;
+}
+
+/*Sign up CSS properties*/
+.fontSize14em{
+	font-size: 1.4em;
+}
