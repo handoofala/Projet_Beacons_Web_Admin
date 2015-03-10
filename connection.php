@@ -15,6 +15,9 @@
 		if(hash('sha256', $_POST["password"]) == $donnees["pswd"]){
 			$_SESSION["connected"] = true;
 			$_SESSION["user"] = $_POST["pseudo"];
+		}else{
+			$_SESSION["connected"] = false;
+			header('Location: index.php');
 		}
 		
 	}else if(isset($_SESSION["user"]) AND isset($_SESSION["connected"]) AND ($_SESSION["connected"] == true) AND ($_SESSION["user"] != NULL OR $_SESSION["user"] != "")){
@@ -28,6 +31,7 @@
 		}
 	}else{
 		$_SESSION["connected"] = false;
+		header('Location: index.php');
 	}
 	
 	if(isset($_GET["id"])){
