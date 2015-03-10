@@ -7,10 +7,12 @@
 		$req->execute(array(':pseudo' => strip_tags($_POST["pseudo"])));
 		$donnees = $req->fetch();
 		$req->closeCursor();
+		
 		if(hash('sha256', $_POST["password"]) == $donnees["pswd"]){
 			$_SESSION["connected"] = true;
 			$_SESSION["user"] = $_POST["pseudo"];
 		}
+		
 	}else if(isset($_SESSION["user"]) AND isset($_SESSION["connected"]) AND ($_SESSION["connected"] == true) AND ($_SESSION["user"] != NULL OR $_SESSION["user"] != "")){
 		$_SESSION["connected"] = false;
 		$req = $bdd->prepare("SELECT count(pseudo) AS nbUser FROM users WHERE pseudo = :pseudo");
@@ -140,7 +142,7 @@
 				");
 				$req->execute(array(
 					':idEcole' => $idEcole["id"],
-					':idUser' => $idUser["id"],
+					':idUser' => $idUser["id"]
 				));
 				$req->closeCursor();
 			}
@@ -191,24 +193,42 @@
 								<td class="tableTD">Villes</td>
 							</tr>
 							<?php
-								$req = $bdd->prepare("SELECT id_ecole FROM lien_users_ecoles WHERE id_user = (SELECT id FROM users WHERE pseudo = :pseudo)");
+								$req = $bdd->prepare("SELECT DISTINCT(id_ecole) AS id_ecole FROM lien_users_ecoles WHERE id_user = (SELECT id FROM users WHERE pseudo = :pseudo)");
 								$req->execute(array(
 									':pseudo' => strip_tags($_SESSION["user"])
+									
 								));
+								$dataToSend = array();
+								$i=0;
 								while($donnees = $req->fetch()){
 									$reqTmp = $bdd->prepare("SELECT * FROM ecoles WHERE id = :id");
 									$reqTmp->execute(array(':id' => strip_tags($donnees["id_ecole"])));
+									//echo $reqTmp;
 									$donneesTmp = $reqTmp->fetch();
+									//echo $donneesTmp;
+									
 									$reqTmp->closeCursor();
+									
+									if(isset($_GET["json"]) AND $_GET["json"] == true){
+										$dataToSend[$i] = $donneesTmp;
+										$_SESSION["donnees"] = $dataToSend;
+									}else{
 									?>
 									<tr>
+										
 										<td class="tableTD"><?php echo $donneesTmp["nomEcole"];?></td>
 										<td class="tableTD"><?php echo $donneesTmp["ville"];?></td>
 										<td><a href="connection.php?id=<?php echo $donneesTmp["id"];?>"><img src="img/deleteButton.png" alt="Delete"/></a></td>
 									</tr>
 									<?php
+									}
+									$i=$i+1;
 								}
 								$req->closeCursor();
+								if(isset($_GET["json"]) AND $_GET["json"] == true){
+									header('Location: connectionJson.php');
+									exit();
+								}
 							?>
 						</table>
 						<?php ?>

@@ -2,5 +2,5 @@
 	$hostname = "localhost";
 	$dattabase = "handoofala";
 	$loggin = "handoofala";
-	$password = "Zantetsuken";
+	$password = "toto";
 ?>
