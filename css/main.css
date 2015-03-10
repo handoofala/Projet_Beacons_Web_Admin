@@ -52,3 +52,26 @@ body{
 .fontSize14em{
 	font-size: 1.4em;
 }
+
+/*Schools CSS properties (connection.php)*/
+.formSchools{
+	border: 7px solid #000;
+	border-radius: 10px;
+	margin: 47px auto;
+	padding: 1% 9%;
+	background: #FFF none repeat scroll 0% 0%;
+	width: 300px;
+}
+
+.fontSize11em{
+	font-size: 1.1em;
+}
+
+.DoubleLine{
+	margin: 2px 0;
+}
+
+.tableTD{
+	border: solid 0.01em black;
+	padding: 2px 14px;
+}

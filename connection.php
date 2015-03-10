@@ -23,6 +23,129 @@
 	}else{
 		$_SESSION["connected"] = false;
 	}
+	
+	if(isset($_GET["id"])){
+		$req = $bdd->prepare("SELECT id FROM users WHERE pseudo = :pseudo");
+		$req->execute(array(':pseudo' => strip_tags($_SESSION["user"])));
+		$donnees = $req->fetch();
+		$req->closeCursor();
+		
+		/*we check if the link exist*/
+		$req = $bdd->prepare("SELECT count(id_ecole) AS nbLinkEcole, count(id_user) AS nbLinkUser FROM lien_users_ecoles WHERE id_user = :id_user AND id_ecole = :id_ecole");
+		$req->execute(array(
+			':id_user' => strip_tags($donnees["id"]),
+			':id_ecole' => strip_tags($_GET["id"])
+		));
+		$donnees2 = $req->fetch();
+		$req->closeCursor();
+		
+		if($donnees2["nbLinkEcole"] == 1 AND $donnees2["nbLinkUser"] == 1){
+			$req = $bdd->prepare("DELETE FROM lien_users_ecoles WHERE id_ecole = :id_ecole AND id_user = :id_user");
+			$req->execute(array(
+				':id_ecole' => strip_tags($_GET["id"]),
+				':id_user' => strip_tags($donnees["id"])
+			));
+			$req->closeCursor();
+		}
+	}
+	
+	if(isset($_POST["addExistingSchool"])){
+		$req = $bdd->prepare("SELECT id FROM users WHERE pseudo = :pseudo");
+		$req->execute(array(':pseudo' => strip_tags($_SESSION["user"])));
+		$idUser = $req->fetch();
+		$req->closeCursor();
+		
+		/*we check if the link does not exist*/
+		$req = $bdd->prepare("SELECT count(id_ecole) AS nbLinkEcole, count(id_user) AS nbLinkUser FROM lien_users_ecoles WHERE id_user = :id_user AND id_ecole = :id_ecole");
+		$req->execute(array(
+			':id_user' => strip_tags($idUser["id"]),
+			':id_ecole' => strip_tags($_POST["schools"])
+		));
+		$donnees2 = $req->fetch();
+		$req->closeCursor();
+		
+		if($donnees2["nbLinkEcole"] == 0 AND $donnees2["nbLinkUser"] == 0){
+			$req = $bdd->prepare("INSERT INTO lien_users_ecoles VALUES(
+				:idEcole,
+				:idUser
+				)
+			");
+			$req->execute(array(
+				':idEcole' => strip_tags($_POST["schools"]),
+				':idUser' => strip_tags($idUser["id"])
+			));
+			$req->closeCursor();
+		}
+	}
+	
+	if(isset($_POST["addSchool"])){
+		/*We first check if the school already exist*/
+		$req = $bdd->prepare("SELECT count(nomEcole) AS nbEcole, count(ville) AS nbVille FROM ecoles WHERE nomEcole = :ecole AND ville = :ville");
+		$req->execute(array(
+			':ecole' => strip_tags($_POST["ecole"]),
+			':ville' => strip_tags($_POST["ville"])
+		));
+		$donnees = $req->fetch();
+		$req->closeCursor();
+		
+		if($donnees["nbEcole"] == 0 AND $donnees["nbVille"] == 0){
+			$req = $bdd->query("SELECT id+1 AS id FROM ecoles ORDER BY id DESC LIMIT 1");
+			$donnees= $req->fetch();
+			$req->closeCursor();
+			
+			if($donnees["id"] < 1 OR $donnees["id"] == NULL){
+				$donnees["id"] = 0;
+			}
+			
+			$req = $bdd->prepare("INSERT INTO ecoles VALUES(
+				:id,
+				:ecole,
+				:ville
+				)
+			");
+			$req->execute(array(
+				':id' => $donnees["id"],
+				':ecole' => strip_tags($_POST["ecole"]),
+				':ville' => strip_tags($_POST["ville"])
+			));
+			$req->closeCursor();
+			
+			$req = $bdd->prepare("SELECT id FROM users WHERE pseudo = :pseudo");
+			$req->execute(array(':pseudo' => strip_tags($_SESSION["user"])));
+			$idUser = $req->fetch();
+			$req->closeCursor();
+			
+			$req = $bdd->prepare("SELECT id FROM ecoles WHERE nomEcole = :ecole AND ville = :ville");
+			$req->execute(array(
+				':ecole' => strip_tags($_POST["ecole"]),
+				':ville' => strip_tags($_POST["ville"])
+			));
+			$idEcole = $req->fetch();
+			$req->closeCursor();
+			
+			/*we check if the link does not exist*/
+			$req = $bdd->prepare("SELECT count(id_ecole) AS nbLinkEcole, count(id_user) AS nbLinkUser FROM lien_users_ecoles WHERE id_user = :id_user AND id_ecole = :id_ecole");
+			$req->execute(array(
+				':id_user' => strip_tags($donnees["id"]),
+				':id_ecole' => strip_tags($_GET["id"])
+			));
+			$donnees2 = $req->fetch();
+			$req->closeCursor();
+			
+			if($donnees2["nbLinkEcole"] == 0 AND $donnees2["nbLinkUser"] == 0){				
+				$req = $bdd->prepare("INSERT INTO lien_users_ecoles VALUES(
+					:idEcole,
+					:idUser
+					)
+				");
+				$req->execute(array(
+					':idEcole' => $idEcole["id"],
+					':idUser' => $idUser["id"],
+				));
+				$req->closeCursor();
+			}
+		}
+	}
 ?>
 <html>
 	<head>
@@ -36,10 +159,61 @@
 		<center>
 			<header>
 				<?php include("nav.php");?>
+				<h1>Welcome, <?php echo $_SESSION["user"];?></h1>
 			</header>
-			<section>
+			<section class="fontSize11em">
 				<?php if(isset($_SESSION["user"]) AND isset($_SESSION["connected"]) AND ($_SESSION["connected"] == true)) {
-					?><p>Connected</p><?php
+					?>
+					<article class="formSchools">
+						<p>Add a school and link it to you:</p>
+						<form method="post" action="connection.php">
+							<input type="text" name="ecole" placeholder="Name of your school" class="fontSize11em DoubleLine"/>
+							<input type="text" name="ville" placeholder="City of your school" class="fontSize11em DoubleLine"/>
+							<input type="submit" name="addSchool" value="Add this school" class="fontSize11em DoubleLine"/>
+						</form>
+						<p>Link an existing school to you:</p>
+						<form method="post" action="connection.php">
+							<select name="schools" class="DoubleLine fontSize11em">
+								<?php						
+									$req = $bdd->query("SELECT * FROM ecoles");	
+									while($donnees = $req->fetch()){
+										?><option value="<?php echo $donnees["id"]; ?>"><?php echo $donnees["nomEcole"] . " - " . $donnees["ville"]; ?></option><?php
+									}
+									$req->closeCursor();
+								?>
+							</select>
+							<input type="submit" name="addExistingSchool" value="Add this school" class="DoubleLine fontSize11em"/>
+						</form>
+						<p>Your actual schools:</p>
+						<table>
+							<tr>
+								<td class="tableTD">Ecoles</td>
+								<td class="tableTD">Villes</td>
+							</tr>
+							<?php
+								$req = $bdd->prepare("SELECT id_ecole FROM lien_users_ecoles WHERE id_user = (SELECT id FROM users WHERE pseudo = :pseudo)");
+								$req->execute(array(
+									':pseudo' => strip_tags($_SESSION["user"])
+								));
+								while($donnees = $req->fetch()){
+									$reqTmp = $bdd->prepare("SELECT * FROM ecoles WHERE id = :id");
+									$reqTmp->execute(array(':id' => strip_tags($donnees["id_ecole"])));
+									$donneesTmp = $reqTmp->fetch();
+									$reqTmp->closeCursor();
+									?>
+									<tr>
+										<td class="tableTD"><?php echo $donneesTmp["nomEcole"];?></td>
+										<td class="tableTD"><?php echo $donneesTmp["ville"];?></td>
+										<td><a href="connection.php?id=<?php echo $donneesTmp["id"];?>"><img src="img/deleteButton.png" alt="Delete"/></a></td>
+									</tr>
+									<?php
+								}
+								$req->closeCursor();
+							?>
+						</table>
+						<?php ?>
+					</article>
+					<?php
 				}else{
 					?><p>Error : try to sign in again</p><?php
 				}?>
