@@ -2,6 +2,10 @@
 <?php
 	session_start();
 	include("initPage.php");
+	if(isset($_GET["json"]) AND $_GET["json"] == true){
+		$_POST["pseudo"] = $_POST["A VOIR AVEC EUX"];
+		$_POST["password"] = $_POST["A VOIR AUSSI AVEC EUX"];
+	}
 	if(isset($_POST["password"])){
 		$req = $bdd->prepare("SELECT pswd FROM users WHERE pseudo = :pseudo");
 		$req->execute(array(':pseudo' => strip_tags($_POST["pseudo"])));
