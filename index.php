@@ -20,7 +20,7 @@
 		<?php 
 			include("head.php");
 			if(isset($_SESSION["user"]) AND isset($_SESSION["connected"]) AND ($_SESSION["connected"] == true)){
-				?><meta http-equiv="refresh" content="1; URL=http://ethandev.fr/connection.php"><?php
+				?><meta http-equiv="refresh" content="1; URL=http://git.ethandev.fr/connection.php"><?php
 			}
 		?>
 		<title>Projet Beacons</title>
