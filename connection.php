@@ -161,7 +161,7 @@
 	<head>
 		<?php include("head.php");
 		if(isset($_SESSION["connected"]) AND ($_SESSION["connected"] == false)){
-			?><meta http-equiv="refresh" content="5; URL=http://127.0.0.1/ProjetBeacon"><?php
+			?><meta http-equiv="refresh" content="5; URL=http://git.ethandev.fr/"><?php
 		}?>
 		<title>Projet Beacons</title>
 	</head>
