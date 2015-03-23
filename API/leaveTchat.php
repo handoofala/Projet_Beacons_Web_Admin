@@ -1,34 +1,33 @@
 <?php
 	session_start();
 	include("../initPage.php");
-	header('Content-Type: application/json');
+	$inputJSON = file_get_contents('php://input');
+	$input= json_decode( $inputJSON, TRUE );
 	
 	function redirectionErreur401(){
-		header('HTTP/1.0 401 Unauthorized : user have not the right to post message here');
+		header('HTTP/1.0 409 Conflict : user is not currently in this room.');
 		exit;
 	}
 
-	function leaveTchat($token, $id_room){
-        $req = $bdd->prepare("SELECT count(pseudo) AS user FROM users WHERE pseudo = :pseudo");
-        $req->execute(array(':pseudo' => strip_tags($token)));
+	function leaveTchat($token){
+		include("../initConnectionBDD.php");
+		
+        $req = $bdd->prepare("SELECT count(pseudo) AS nbUser, id AS id_user FROM users WHERE token = :token");
+        $req->execute(array(':token' => strip_tags($token)));
         $donnees = $req->fetch();
         $req->closeCursor();
         
-		if($donnees["pseudo"] == 1){
-			$req = $bdd->prepare("DELETE FROM lien_rooms_users WHERE id_user = (SELECT id FROM users WHERE pseudo = :pseudo) AND id_room = :id_room");
-			$req->execute(array(
-				':pseudo' => strip_tags($token),
-				':id_room' => strip_tags($id_room)
-			));
+		if($donnees["nbUser"] == 1){
+			$req = $bdd->prepare("DELETE FROM lien_rooms_users WHERE id_user = :id_user");
+			$req->execute(array(':id_user' => strip_tags($donnees["id_user"])));
 		}else{
 			redirectionErreur401();
 		}
 	}
 
-if(isset($_POST["data"])){
-	$jsonData = json_decode($_POST["data"]);
-	leaveTchat(jsonData.get("token"), jsonData.get("id_room"));
-}else{
-	echo "Variable error : $_POST[\"data\"] does not exist";
-}
+	if(isset($input["token"])){
+		leaveTchat($input["token"]);
+	}else{
+		echo "Variable error : token does not exist";
+	}
 ?>

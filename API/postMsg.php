@@ -1,40 +1,57 @@
 <?php
 	session_start();
-	include("../initPage.php");
 	header('Content-Type: application/json');
+	$inputJSON = file_get_contents('php://input');
+	$input= json_decode( $inputJSON, TRUE );
 	
-	function redirectionErreur401(){
-		header('HTTP/1.0 401 Unauthorized : user have not the right to post message here');
+	function redirectionErreur409(){
+		header('HTTP/1.0 409 Conflict : Unknown token or user not connected on any room');
 		exit;
 	}
 
-	function postMsg($token, $msg, $id_room){
-        $req = $bdd->prepare("SELECT count(pseudo) AS user FROM users WHERE pseudo = :pseudo");
-        $req->execute(array(':pseudo' => strip_tags($token)));
+	function postMsg($token, $msg){
+		include("../initConnectionBDD.php");
+		
+        $req = $bdd->prepare("SELECT count(id) AS nbUserId, id AS id_user FROM users WHERE token = :token");
+        $req->execute(array(':token' => strip_tags($token)));
         $donnees = $req->fetch();
         $req->closeCursor();
         
-		if($donnees["pseudo"] == 1){
-			$req = $bdd->prepare("INSERT INTO messages VALUES(
-				(SELECT id FROM users WHERE pseudo = :pseudo),
-				:id_room,
-				:message,
-				)
-			");
+		if($donnees["nbUserId"] == 1){
+			$id_user = $donnees["id_user"];
+			
+			$req = $bdd->prepare("SELECT count(id_room) AS nbRoom, id_room FROM lien_rooms_users WHERE id_user = :id_user");
 			$req->execute(array(
-				':pseudo' => strip_tags($token),
-				':id_room' => strip_tags($id_room),
-				':message' => strip_tags($msg)
+				':id_user' => strip_tags($id_user)
 			));
+			$donnees = $req->fetch();
+			$req->closeCursor();
+			
+			if($donnees["nbRoom"] == 1){
+				$req = $bdd->prepare("INSERT INTO messages VALUES(
+					:id_user,
+					:id_room,
+					:message,
+					NOW()
+					)
+				");
+				$req->execute(array(
+					':id_user' => strip_tags($id_user),
+					':id_room' => strip_tags($donnees["id_room"]),
+					':message' => strip_tags($msg)
+				));
+				$req->closeCursor();
+			}else{
+				redirectionErreur409();
+			}
 		}else{
-			redirectionErreur401();
+			redirectionErreur409();
 		}
 	}
 
-if(isset($_POST["data"])){
-	$jsonData = json_decode($_POST["data"]);
-	postMsg(jsonData.get("token"), jsonData.get("msg"), jsonData.get("id_room"));
-}else{
-	echo "Variable error : $_POST[\"data\"] does not exist";
-}
+	if(isset($input["token"]) AND isset($input["content"])){
+		postMsg($input["token"], $input["content"]);
+	}else{
+		echo "Variables error : token and content do not exist";
+	}
 ?>

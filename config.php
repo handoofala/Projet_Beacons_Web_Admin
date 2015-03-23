@@ -1,6 +1,6 @@
 ﻿<?php
 	$hostname = "localhost";
-	$dattabase = "nexion";
-	$loggin = "nexion";
-	$password = "noixen";
+	$dattabase = "handoofala";
+	$loggin = "handoofala";
+	$password = "toto";
 ?>

@@ -1,31 +1,38 @@
 <?php
 	session_start();
-	include("../initPage.php");
 	header('Content-Type: application/json');
+	$inputJSON = file_get_contents('php://input');
+	$input= json_decode( $inputJSON, TRUE );
 	
 	function redirectionErreur401(){
 		header('HTTP/1.0 401 Unauthorized : password / login incorrect');
 		exit;
 	}
 
-	function getToken($login, $password){
+	function getToken($login, $pswd){
+		include("../initConnectionBDD.php");
+		
         $req = $bdd->prepare("SELECT * FROM users WHERE pseudo = :pseudo");
         $req->execute(array(':pseudo' => strip_tags($login)));
         $donnees = $req->fetch();
         $req->closeCursor();
         
-        if(hash('sha256', $_POST["password"]) == $donnees["pswd"]){
-			$token = $donnees["pseudo"];
-			$dataToSend[1] = $token;
+        if(hash('sha256', $pswd) == $donnees["pswd"]){
+			$token = md5(uniqid(mt_rand(), true));
+			$req = $bdd->prepare("UPDATE users SET token = :token");
+			$req->execute(array(':token' => $token));
+			$req->closeCursor();
+			$dataToSend["token"] = $token;
 			echo json_encode($dataToSend);
-        }
-        redirectionErreur401();
+        }else{
+			redirectionErreur401();
+		}
 	}
 
-if(isset($_POST["data"])){
-	$jsonData = json_decode($_POST["data"]);
-	getToken(jsonData.get("login"), jsonData.get("password"));
-}else{
-	echo "Variable error : $_POST[\"data\"] does not exist";
-}
+	
+	if(isset($input["login"]) AND isset($input["password"])){
+		getToken($input["login"], $input["password"]);
+	}else{
+		echo "Variables error : login and password do not exist";
+	}
 ?>

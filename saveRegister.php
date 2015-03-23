@@ -20,7 +20,8 @@
 				:pswd,
 				'1',
 				:email,
-				:dateCrea
+				:dateCrea,
+				''
 				)
 			");
 			$req->execute(array(
