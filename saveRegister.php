@@ -18,7 +18,7 @@
 				'',
 				:pseudo,
 				:pswd,
-				'1',
+				'2',
 				:email,
 				:dateCrea,
 				''

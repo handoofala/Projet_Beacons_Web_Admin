@@ -23,7 +23,7 @@
         $req->closeCursor();
         
         if($donnees["nbId"] == 1){
-			if($donnees["isAdmin"] == 1){
+			if($donnees["isAdmin"] >= 1){
 				$req = $bdd->prepare("SELECT count(id_user) AS nbUser FROM lien_rooms_users WHERE id_user = :user_id");
 				$req->execute(array(
 					':user_id' => strip_tags($userIdToKick)
