@@ -109,6 +109,6 @@
 	if(isset($input["token"]) AND isset($input["room_id"])){
 		joinTchat($input["token"], $input["room_id"]);
 	}else{
-		echo "Variables error : login and password do not exist";
+		echo "Variables error : token and room_id do not exist";
 	}
 ?>
