@@ -19,8 +19,11 @@
         
         if(hash('sha256', $pswd) == $donnees["pswd"]){
 			$token = md5(uniqid(mt_rand(), true));
-			$req = $bdd->prepare("UPDATE users SET token = :token");
-			$req->execute(array(':token' => $token));
+			$req = $bdd->prepare("UPDATE users SET token = :token WHERE pseudo = :pseudo");
+			$req->execute(array(
+				':token' => $token,
+				':pseudo' => strip_tags($login)
+			));
 			$req->closeCursor();
 			$dataToSend["token"] = $token;
 			echo json_encode($dataToSend);

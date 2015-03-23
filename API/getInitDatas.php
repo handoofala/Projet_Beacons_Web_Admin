@@ -26,8 +26,8 @@
 			");
 			$req->execute(array(':id_user' => strip_tags($donnees["id"])));
 			$i = 0;
+			
 			while($donnees = $req->fetch()){
-				
 				$req2 = $bdd->prepare("SELECT * FROM beacons WHERE id = :id_beacon");
 				$req2->execute(array(':id_beacon' => strip_tags($donnees["beacon_id_1"])));
 				$donnees1 = $req2->fetch();
@@ -50,6 +50,18 @@
 				$dataToSend["rooms"][$i]["beacons"][3]["id"] = $donnees["beacon_id_4"];
 				$dataToSend["rooms"][$i]["beacons"][3]["UUID"] = $donnees4["UUID"];
 				$i = $i+1;
+			}
+			if(!isset($dataToSend)){
+				$dataToSend["rooms"][0]["id"] = "";
+				$dataToSend["rooms"][0]["name"] = "";
+				$dataToSend["rooms"][0]["beacons"][0]["id"] = "";
+				$dataToSend["rooms"][0]["beacons"][0]["UUID"] = "";
+				$dataToSend["rooms"][0]["beacons"][1]["id"] = "";
+				$dataToSend["rooms"][0]["beacons"][1]["UUID"] = "";
+				$dataToSend["rooms"][0]["beacons"][2]["id"] = "";
+				$dataToSend["rooms"][0]["beacons"][2]["UUID"] = "";
+				$dataToSend["rooms"][0]["beacons"][3]["id"] = "";
+				$dataToSend["rooms"][0]["beacons"][3]["UUID"] = "";
 			}
 			$req->closeCursor();
 			echo json_encode($dataToSend);
