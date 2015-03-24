@@ -54,22 +54,22 @@
 	}
 	
 	if(isset($_POST["addRoom"])){
-		$req = $bdd->query("SELECT id FROM beacons ORDER BY id DESC LIMIT 1");
-		$donnees = $req->fetch();
-		$lastId = $donnees["id"];
-		$req->closeCursor();
-		
-		$req = $bdd->prepare("SELECT id_ecole FROM lien_users_ecoles WHERE id_user = (SELECT id FROM users WHERE pseudo = :pseudo)");
+		$req = $bdd->prepare("INSERT INTO rooms VALUES(
+			'',
+			:name,
+			:pswdRoom
+			)
+		");
 		$req->execute(array(
-			':pseudo' => strip_tags($_SESSION["user"])
+			':name' => strip_tags($_POST["roomName"]),
+			':pswdRoom' => strip_tags(md5($_POST["passwordRoom"]))
 		));
-		$donnees = $req->fetch();
-		$id_ecole = $donnees["id_ecole"];
 		$req->closeCursor();
 		
 		$req = $bdd->prepare("INSERT INTO beacons VALUES (
 			'',
-			:UUID
+			:UUID,
+			(SELECT id FROM rooms ORDER BY id DESC LIMIT 1)
 			)
 		");
 		$req->execute(array(':UUID' => strip_tags($_POST["beacon1"])));
@@ -77,33 +77,13 @@
 		$req->execute(array(':UUID' => strip_tags($_POST["beacon3"])));
 		$req->execute(array(':UUID' => strip_tags($_POST["beacon4"])));
 		$req->closeCursor();
-		
-		$req = $bdd->prepare("INSERT INTO rooms VALUES(
-			'',
-			:idM1,
-			:idM2,
-			:idM3,
-			:idM4,
-			:nameRoom,
-			:passwordRoom
-			)
-		");
-		$req->execute(array(
-			':idM1' => $lastId+1,
-			':idM2' => $lastId+2,
-			':idM3' => $lastId+3,
-			':idM4' => $lastId+4,
-			':nameRoom' => strip_tags($_POST["roomName"]),
-			':passwordRoom' => strip_tags(md5($_POST["passwordRoom"]))
-		));
-		$req->closeCursor();
-		
+				
 		$req = $bdd->prepare("INSERT INTO lien_rooms_ecoles VALUES(
-			:id_ecole,
-			(SELECT id FROM rooms ORDER BY id DESC LIMIT 1)
+				(SELECT id_ecole FROM lien_users_ecoles WHERE id_user = (SELECT id FROM users WHERE pseudo = :pseudo)),
+				(SELECT id FROM rooms ORDER BY id DESC LIMIT 1)
 			)
 		");
-		$req->execute(array(':id_ecole' => $id_ecole ));
+		$req->execute(array(':pseudo' => strip_tags($_SESSION["user"])));
 		$req->closeCursor();
 	}
 	
@@ -371,36 +351,49 @@
 							<table>
 								<tr>
 									<td class="tableTD">Name</td>
-									<td class="tableTD">Beacon 1</td>
-									<td class="tableTD">Beacon 2</td>
-									<td class="tableTD">Beacon 3</td>
-									<td class="tableTD">Beacon 4</td>
+									<td class="tableTD">Beacons</td>
 								</tr>
 								<?php
-									$req = $bdd->prepare("SELECT rooms.name AS name, beacons.UUID as UUID FROM rooms
+									$req = $bdd->prepare("SELECT rooms.name AS name, beacons.UUID as UUID, beacons.id_room AS relatedRoom FROM rooms
 										INNER JOIN beacons
-										ON beacons.id = rooms.beacon_id_1
-											OR beacons.id = rooms.beacon_id_2
-											OR beacons.id = rooms.beacon_id_3
-											OR beacons.id = rooms.beacon_id_4
+										ON beacons.id_room = rooms.id
 										WHERE rooms.id IN (SELECT id_room FROM lien_rooms_ecoles WHERE id_ecole = (SELECT id_ecole FROM lien_users_ecoles WHERE id_user = (SELECT id FROM users WHERE pseudo = :pseudo)))
 									");
 									$req->execute(array(
 										':pseudo' => strip_tags($_SESSION["user"])
 									));
-									while($donnees = $req->fetch()){
-									?>
-									<tr>
-										<td class="tableTD"><?php echo $donnees["name"];?></td>
-										<td class="tableTD"><?php echo $donnees["UUID"];?></td>
-										<?php $donnees = $req->fetch(); ?>
-										<td class="tableTD"><?php echo $donnees["UUID"];?></td>
-										<?php $donnees = $req->fetch(); ?>
-										<td class="tableTD"><?php echo $donnees["UUID"];?></td>
-										<?php $donnees = $req->fetch(); ?>
-										<td class="tableTD"><?php echo $donnees["UUID"];?></td>
-									</tr>
-									<?php
+									
+									$req2 = $bdd->prepare("SELECT count(beacons.id) AS compt FROM rooms
+										INNER JOIN beacons
+										ON beacons.id_room = rooms.id
+										WHERE rooms.id IN (SELECT id_room FROM lien_rooms_ecoles WHERE id_ecole = (SELECT id_ecole FROM lien_users_ecoles WHERE id_user = (SELECT id FROM users WHERE pseudo = :pseudo)))
+									");
+									$req2->execute(array(
+										':pseudo' => strip_tags($_SESSION["user"])
+									));
+									
+									
+									
+									$donnees = $req->fetch();
+									$donnees2 = $req2->fetch();
+									$req2->closeCursor();
+									$size = $donnees2["compt"];
+									for($i=0; $i<$size;$i++){
+										$oldName = $donnees["name"];
+										?>
+										<tr>
+											<td class="tableTD"><?php echo $oldName;?></td>
+											<td class="tableTD"><?php
+												$iTmp = -1;
+												do{
+													$iTmp++;
+													echo $donnees["UUID"] . " ; ";
+													$oldRoom = $donnees["relatedRoom"];
+												}while($donnees = $req->fetch() AND $donnees["relatedRoom"] == $oldRoom);
+												$i+=$iTmp;
+											?></td>
+										</tr>
+										<?php
 									}
 									$req->closeCursor();
 								?>

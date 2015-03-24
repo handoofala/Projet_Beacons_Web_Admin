@@ -18,50 +18,46 @@
         $req->closeCursor();
         
         if($donnees["nbId"] == 1){
-			$req = $bdd->prepare("SELECT * FROM rooms WHERE id IN (
-				SELECT id_room FROM lien_rooms_ecoles WHERE id_ecole IN (
-					SELECT id_ecole FROM lien_users_ecoles WHERE id_user = :id_user
-					)
-				)
+			$req = $bdd->prepare("SELECT rooms.id AS id, rooms.name AS name,beacons.id AS idBeacon, beacons.UUID as UUID, beacons.id_room AS relatedRoom FROM rooms
+				INNER JOIN beacons
+				ON beacons.id_room = rooms.id
+				WHERE rooms.id IN (SELECT id_room FROM lien_rooms_ecoles WHERE id_ecole = (SELECT id_ecole FROM lien_users_ecoles WHERE id_user = (SELECT id FROM users WHERE pseudo = :pseudo)))
 			");
-			$req->execute(array(':id_user' => strip_tags($donnees["id"])));
-			$i = 0;
+			$req->execute(array(
+				':pseudo' => strip_tags($_SESSION["user"])
+			));
+									
+			$req2 = $bdd->prepare("SELECT count(beacons.id) AS compt FROM rooms
+				INNER JOIN beacons
+				ON beacons.id_room = rooms.id
+				WHERE rooms.id IN (SELECT id_room FROM lien_rooms_ecoles WHERE id_ecole = (SELECT id_ecole FROM lien_users_ecoles WHERE id_user = (SELECT id FROM users WHERE pseudo = :pseudo)))
+			");
+			$req2->execute(array(
+				':pseudo' => strip_tags($_SESSION["user"])
+			));
+			$donnees2 = $req2->fetch();
+			$req2->closeCursor();
 			
-			while($donnees = $req->fetch()){
-				$req2 = $bdd->prepare("SELECT * FROM beacons WHERE id = :id_beacon");
-				$req2->execute(array(':id_beacon' => strip_tags($donnees["beacon_id_1"])));
-				$donnees1 = $req2->fetch();
-				$req2->execute(array(':id_beacon' => strip_tags($donnees["beacon_id_2"])));
-				$donnees2 = $req2->fetch();
-				$req2->execute(array(':id_beacon' => strip_tags($donnees["beacon_id_3"])));
-				$donnees3 = $req2->fetch();
-				$req2->execute(array(':id_beacon' => strip_tags($donnees["beacon_id_4"])));
-				$donnees4 = $req2->fetch();
-				$req2->closeCursor();
+			$size = $donnees2["compt"];
+			$donnees = $req->fetch();
+			$basics = 0;
+			for($i = 1; $i < $size; $i++){
+				$oldName = $donnees["name"];
+				$dataToSend["rooms"][$basics]["id"] = $donnees["id"];
+				$dataToSend["rooms"][$basics]["name"] = $oldName;
 				
-				$dataToSend["rooms"][$i]["id"] = $donnees["id"];
-				$dataToSend["rooms"][$i]["name"] = $donnees["name"];
-				$dataToSend["rooms"][$i]["beacons"][0]["id"] = $donnees["beacon_id_1"];
-				$dataToSend["rooms"][$i]["beacons"][0]["UUID"] = $donnees1["UUID"];
-				$dataToSend["rooms"][$i]["beacons"][1]["id"] = $donnees["beacon_id_2"];
-				$dataToSend["rooms"][$i]["beacons"][1]["UUID"] = $donnees2["UUID"];
-				$dataToSend["rooms"][$i]["beacons"][2]["id"] = $donnees["beacon_id_3"];
-				$dataToSend["rooms"][$i]["beacons"][2]["UUID"] = $donnees3["UUID"];
-				$dataToSend["rooms"][$i]["beacons"][3]["id"] = $donnees["beacon_id_4"];
-				$dataToSend["rooms"][$i]["beacons"][3]["UUID"] = $donnees4["UUID"];
-				$i = $i+1;
+				$iTmp = -1;
+				do{
+					$iTmp++;
+					$dataToSend["rooms"][$basics]["beacons"][$iTmp]["id"] = $donnees["idBeacon"];
+					$dataToSend["rooms"][$basics]["beacons"][$iTmp]["UUID"] = $donnees["UUID"];
+					$oldRoom = $donnees["relatedRoom"];
+				}while($donnees = $req->fetch() AND $donnees["relatedRoom"] == $oldRoom);
+				$i+=$iTmp;
+				$basics++;
 			}
 			if(!isset($dataToSend)){
-				$dataToSend["rooms"][0]["id"] = "";
-				$dataToSend["rooms"][0]["name"] = "";
-				$dataToSend["rooms"][0]["beacons"][0]["id"] = "";
-				$dataToSend["rooms"][0]["beacons"][0]["UUID"] = "";
-				$dataToSend["rooms"][0]["beacons"][1]["id"] = "";
-				$dataToSend["rooms"][0]["beacons"][1]["UUID"] = "";
-				$dataToSend["rooms"][0]["beacons"][2]["id"] = "";
-				$dataToSend["rooms"][0]["beacons"][2]["UUID"] = "";
-				$dataToSend["rooms"][0]["beacons"][3]["id"] = "";
-				$dataToSend["rooms"][0]["beacons"][3]["UUID"] = "";
+				$dataToSend = json_decode ("{\"rooms\":[]}");
 			}
 			$req->closeCursor();
 			echo json_encode($dataToSend);
