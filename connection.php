@@ -19,7 +19,7 @@
 			)
 		");
 		$req->execute(array(
-			':pseudo' => strip_tags($_POST["pseudoUser"]),
+			':pseudo' => strip_tags(strtolower($_POST["pseudoUser"])),
 			':pswd' => hash('sha256', $_POST["passwordUser"]),
 			':role' => strip_tags($_POST["role"]),
 			':email' => strip_tags($_POST["mailUser"])
@@ -57,12 +57,11 @@
 		$req = $bdd->prepare("INSERT INTO rooms VALUES(
 			'',
 			:name,
-			:pswdRoom
+			''
 			)
 		");
 		$req->execute(array(
-			':name' => strip_tags($_POST["roomName"]),
-			':pswdRoom' => strip_tags(md5($_POST["passwordRoom"]))
+			':name' => strip_tags($_POST["roomName"])
 		));
 		$req->closeCursor();
 		

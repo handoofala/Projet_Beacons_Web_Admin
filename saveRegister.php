@@ -25,7 +25,7 @@
 				)
 			");
 			$req->execute(array(
-				':pseudo' => strip_tags($_POST["pseudo"]),
+				':pseudo' => strip_tags(strtolower($_POST["pseudo"])),
 				':pswd' => strip_tags(hash('sha256', $_POST["password"])),
 				':email' => strip_tags($_POST["mail"]),
 				':dateCrea' => $dateTimeNow
