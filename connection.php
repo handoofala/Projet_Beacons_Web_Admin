@@ -357,6 +357,7 @@
 										INNER JOIN beacons
 										ON beacons.id_room = rooms.id
 										WHERE rooms.id IN (SELECT id_room FROM lien_rooms_ecoles WHERE id_ecole = (SELECT id_ecole FROM lien_users_ecoles WHERE id_user = (SELECT id FROM users WHERE pseudo = :pseudo)))
+										ORDER BY relatedRoom
 									");
 									$req->execute(array(
 										':pseudo' => strip_tags($_SESSION["user"])
