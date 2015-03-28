@@ -204,7 +204,7 @@
 						$donnees2 = $req2->fetch();
 						$req2->closeCursor();
 						$dataToSend["users"][$i]["id"] = $donnees2["id"];
-						$dataToSend["users"][$i]["userName"] = $donnees2["pseudo"];
+						$dataToSend["users"][$i]["pseudo"] = $donnees2["pseudo"];
 						$dataToSend["users"][$i]["role"] = $donnees2["isAdmin"];
 						$i = $i+1;
 					}

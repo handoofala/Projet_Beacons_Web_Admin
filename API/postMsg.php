@@ -125,7 +125,7 @@
 		if($donnees["nbUserId"] == 1){
 			$id_user = $donnees["id"];
 			
-			$req = $bdd->prepare("SELECT count(id_room) AS nbRoom, id_room FROM lien_rooms_users WHERE id_user = :id_user");
+			$req = $bdd->prepare("SELECT count(id_room) AS nbRoom, id_room, is_kicked FROM lien_rooms_users WHERE id_user = :id_user");
 			$req->execute(array(
 				':id_user' => strip_tags($id_user)
 			));
@@ -133,7 +133,7 @@
 			$room_id = $donnees["id_room"];
 			$req->closeCursor();
 			
-			if($donnees["nbRoom"] == 1){
+			if($donnees["nbRoom"] == 1 OR $donnees["is_kicked"] == 1){
 				$req = $bdd->prepare("INSERT INTO messages VALUES(
 					:id_user,
 					:id_room,
@@ -171,7 +171,7 @@
 				}
 				$req->closeCursor();				
 			}else{
-				redirectionErreur409('user not connected on any room');
+				redirectionErreur409('user not connected on any room or kicked');
 			}
 		}else{
 			redirectionErreur409('Unknown user');
