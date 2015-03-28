@@ -120,14 +120,15 @@
 	function kick($token, $userIdToKick, $time){
 		include("../initConnectionBDD.php");
 		
-        $req = $bdd->prepare("SELECT count(id) AS nbId, id, isAdmin FROM users WHERE token = :token");
+        $req = $bdd->prepare("SELECT count(id) AS nbId, id, isAdmin, pseudo FROM users WHERE token = :token");
         $req->execute(array(':token' => strip_tags($token)));
         $donnees = $req->fetch();
+		$pseudo = $donnees["pseudo"];
         $req->closeCursor();
         
         if($donnees["nbId"] == 1){
 			if($donnees["isAdmin"] >= 1){
-				$req = $bdd->prepare("SELECT count(id_user) AS nbUser, pseudo FROM lien_rooms_users WHERE id_user = :user_id");
+				$req = $bdd->prepare("SELECT count(id_user) AS nbUser FROM lien_rooms_users WHERE id_user = :user_id");
 				$req->execute(array(
 					':user_id' => strip_tags($userIdToKick)
 				));
@@ -144,7 +145,7 @@
 					$data = array(
 						'action' => 'kick',
 						'id' => strip_tags($userIdToKick),
-						'pseudo' => $donnees["pseudo"]
+						'pseudo' => $pseudo
 					);
 					
 					$jdata = json_encode($data);
