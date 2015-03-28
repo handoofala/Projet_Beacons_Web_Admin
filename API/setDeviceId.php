@@ -35,12 +35,12 @@
 					':id_device' => strip_tags($gcmKey),
 					':id_user' => strip_tags($donnees["id"])
 				));
-				$req->closeCursor('wrong token / token unknown');
+				$req->closeCursor();
 			}else{
-				redirectionErreur401('id_device already exist');
+				redirectionErreur401('wrong token / token unknown');
 			}
 		}else{
-			redirectionErreur401();
+			redirectionErreur401('id_device already exist');
 		}
 	}
 
